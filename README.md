@@ -39,7 +39,19 @@ After downloading the project to your device, run the following commmand in the 
 npm install
 ```
 
-### 2. Run Development Server
+### 2. Set Up Environment Variable (API Key)
+
+> To protect the API Key, it is not included in this repo, you must get a free one from Google AI Studio
+
+1. Generate a free API Key from Google AI Studio.
+2. In the root of the project, create a new file named `.env.local`
+3. Paste the following into the `.env.local` file:
+
+```
+GOOGLE_GENERATIVE_AI_API_KEY=your_actual_api_key_here
+```
+
+### 3. Run Development Server
 
 To start the development server, run the following command:
 
