@@ -11,10 +11,8 @@ export default function ChatContainer({ sessionId }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Keep track of the last request so we can retry it
   const lastRequestRef = useRef(null);
 
-  // Load chat history for this session
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -38,10 +36,9 @@ export default function ChatContainer({ sessionId }) {
   const saveToStorage = (id, newMessages) => {
     if (typeof window === "undefined") return;
     localStorage.setItem(`chat_${id}`, JSON.stringify(newMessages));
-    window.dispatchEvent(new Event("storage-update")); // refresh sidebar
+    window.dispatchEvent(new Event("storage-update"));
   };
 
-  // Talk to the API
   const sendToAI = async (history) => {
     setIsLoading(true);
     setError(null);

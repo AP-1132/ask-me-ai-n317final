@@ -1,6 +1,3 @@
-// src/lib/storage.js
-
-// Build the list of chats shown in the sidebar
 export function getChatHistory() {
   if (typeof window === "undefined") return [];
 
@@ -10,8 +7,6 @@ export function getChatHistory() {
     const key = localStorage.key(i);
     if (!key) continue;
 
-    // Only process real chat message keys: "chat_<id>"
-    // and explicitly SKIP title keys like "chat_title_<id>"
     if (!key.startsWith("chat_") || key.startsWith("chat_title_")) {
       continue;
     }
@@ -23,7 +18,6 @@ export function getChatHistory() {
       if (Array.isArray(messages) && messages.length > 0) {
         const firstUserMsg = messages.find((m) => m.role === "user");
 
-        // Check for a custom title saved via rename
         const customTitle = localStorage.getItem(`chat_title_${id}`);
 
         let title = customTitle;
@@ -46,14 +40,12 @@ export function getChatHistory() {
   return chats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-// Delete a single conversation and its custom title
 export function deleteChat(id) {
   if (typeof window === "undefined") return;
   localStorage.removeItem(`chat_${id}`);
   localStorage.removeItem(`chat_title_${id}`);
 }
 
-// Clear ALL conversations and ALL custom titles
 export function clearAllChats() {
   if (typeof window === "undefined") return;
 
@@ -71,13 +63,11 @@ export function clearAllChats() {
   keysToRemove.forEach((key) => localStorage.removeItem(key));
 }
 
-// Save or clear a custom chat title
 export function renameChat(id, newTitle) {
   if (typeof window === "undefined") return;
 
   const trimmed = newTitle.trim();
   if (!trimmed) {
-    // Empty title → remove custom, fall back to first user message
     localStorage.removeItem(`chat_title_${id}`);
   } else {
     localStorage.setItem(`chat_title_${id}`, trimmed);
