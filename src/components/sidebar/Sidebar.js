@@ -2,14 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { Plus, LayoutGrid } from "lucide-react";
-import { getChatHistory } from "@/lib/storage";
+import { useParams, useRouter } from "next/navigation";
+import { Plus, LayoutGrid, Trash2 } from "lucide-react";
+import {
+  getChatHistory,
+  deleteChat,
+  clearAllChats,
+  renameChat,
+} from "@/lib/storage";
 import SidebarItem from "./SidebarItem";
 
 export default function Sidebar({ className }) {
   const [history, setHistory] = useState([]);
   const params = useParams();
+  const router = useRouter();
 
   const loadHistory = () => {
     const data = getChatHistory();
@@ -18,11 +24,45 @@ export default function Sidebar({ className }) {
 
   useEffect(() => {
     loadHistory();
-
     window.addEventListener("storage-update", loadHistory);
 
     return () => window.removeEventListener("storage-update", loadHistory);
   }, []);
+
+  const handleDeleteChat = (id) => {
+    const ok = window.confirm(
+      "Delete this conversation? This cannot be undone."
+    );
+    if (!ok) return;
+
+    deleteChat(id);
+    loadHistory();
+    window.dispatchEvent(new Event("storage-update"));
+
+    if (params.sessionId === id) {
+      router.push("/chat");
+    }
+  };
+
+  const handleClearAllChats = () => {
+    if (history.length === 0) return;
+
+    const ok = window.confirm(
+      "Clear all conversations? This will delete your entire chat history."
+    );
+    if (!ok) return;
+
+    clearAllChats();
+    loadHistory();
+    window.dispatchEvent(new Event("storage-update"));
+    router.push("/chat");
+  };
+
+  const handleRenameChat = (id, newTitle) => {
+    renameChat(id, newTitle);
+    loadHistory();
+    window.dispatchEvent(new Event("storage-update"));
+  };
 
   return (
     <aside
@@ -44,8 +84,21 @@ export default function Sidebar({ className }) {
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-        <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">
-          Your Chats
+        <div className="flex items-center justify-between mb-2 px-3">
+          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Your Chats
+          </span>
+
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllChats}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-600 transition-colors"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>Clear all</span>
+            </button>
+          )}
         </div>
 
         {history.length === 0 ? (
@@ -59,6 +112,8 @@ export default function Sidebar({ className }) {
               id={chat.id}
               title={chat.title}
               isActive={params.sessionId === chat.id}
+              onDelete={handleDeleteChat}
+              onRename={handleRenameChat}
             />
           ))
         )}

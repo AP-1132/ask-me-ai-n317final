@@ -9,91 +9,105 @@ export default function ChatContainer({ sessionId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Keep track of the last request so we can retry it
+  const lastRequestRef = useRef(null);
+
+  // Load chat history for this session
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const saved = localStorage.getItem(`chat_${sessionId}`);
     if (saved) {
       try {
-        setMessages(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        setMessages(parsed);
       } catch (e) {
         console.error("Failed to parse history", e);
+        setMessages([]);
       }
     } else {
       setMessages([]);
       setInput("");
     }
+
+    setError(null);
   }, [sessionId]);
 
   const saveToStorage = (id, newMessages) => {
+    if (typeof window === "undefined") return;
     localStorage.setItem(`chat_${id}`, JSON.stringify(newMessages));
-    window.dispatchEvent(new Event("storage-update"));
+    window.dispatchEvent(new Event("storage-update")); // refresh sidebar
+  };
+
+  // Talk to the API
+  const sendToAI = async (history) => {
+    setIsLoading(true);
+    setError(null);
+    lastRequestRef.current = history;
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+
+      if (!response.ok) {
+        let message = "Something went wrong while talking to the AI.";
+        try {
+          const data = await response.json();
+          if (data && data.error) message = data.error;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const aiContent = await response.text();
+
+      const finalHistory = [
+        ...history,
+        {
+          role: "assistant",
+          content: aiContent,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+
+      setMessages(finalHistory);
+      saveToStorage(sessionId, finalHistory);
+    } catch (err) {
+      console.error("Chat API error:", err);
+      setError(err.message || "Sorry, something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    const userMsg = { role: "user", content: input, createdAt: new Date() };
+    const userMsg = {
+      role: "user",
+      content: input.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
     const newHistory = [...messages, userMsg];
 
     setMessages(newHistory);
     saveToStorage(sessionId, newHistory);
     setInput("");
-    setIsLoading(true);
+    setError(null);
 
-    try {
-      const aiMsgPlaceholder = {
-        role: "assistant",
-        content: "",
-        createdAt: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMsgPlaceholder]);
+    await sendToAI(newHistory);
+  };
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newHistory }),
-      });
-
-      if (!response.ok) throw new Error("API request failed");
-      if (!response.body) throw new Error("No response body");
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let aiContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const text = decoder.decode(value, { stream: true });
-        aiContent += text;
-
-        setMessages((prev) => {
-          const updated = [...prev];
-          const lastIndex = updated.length - 1;
-          updated[lastIndex] = { ...updated[lastIndex], content: aiContent };
-          return updated;
-        });
-      }
-
-      const finalHistory = [
-        ...newHistory,
-        { role: "assistant", content: aiContent, createdAt: new Date() },
-      ];
-      saveToStorage(sessionId, finalHistory);
-    } catch (err) {
-      console.error("Stream Error:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, something went wrong. Please try again.",
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleRetry = () => {
+    if (!lastRequestRef.current || isLoading) return;
+    setError(null);
+    sendToAI(lastRequestRef.current);
   };
 
   return (
@@ -102,7 +116,12 @@ export default function ChatContainer({ sessionId }) {
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
-          <ChatList messages={messages} isLoading={isLoading} />
+          <ChatList
+            messages={messages}
+            isLoading={isLoading}
+            error={error}
+            reload={handleRetry}
+          />
         )}
       </div>
 
