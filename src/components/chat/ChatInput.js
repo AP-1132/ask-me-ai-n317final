@@ -19,7 +19,10 @@ export default function ChatInput({
       onSubmit={handleSubmit}
       className="relative flex items-end gap-2 w-full max-w-4xl mx-auto"
     >
-      <div className="relative flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all overflow-hidden">
+      <div
+        className="relative flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-orange-100 focus-within:border-orange-400 transition-all overflow-hidden"
+        style={{ backgroundColor: "#fbcfb14f" }}
+      >
         <TextareaAutosize
           minRows={1}
           maxRows={6}
@@ -34,7 +37,7 @@ export default function ChatInput({
         <button
           type="submit"
           disabled={isLoading || !input?.trim()}
-          className="absolute right-2 bottom-2 p-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 transition-colors"
+          className="absolute right-2 bottom-2 p-1.5 rounded-full bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-40 disabled:hover:bg-orange-600 transition-colors"
         >
           <SendHorizontal className="w-4 h-4" />
         </button>

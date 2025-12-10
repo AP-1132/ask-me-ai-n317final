@@ -30,13 +30,13 @@ export default function Sidebar({ className }) {
     >
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-2 mb-6 text-gray-800 font-bold text-xl px-2">
-          <LayoutGrid className="w-6 h-6 text-blue-600" />
+          <LayoutGrid className="w-6 h-6 text-orange-600" />
           <span>AskMe AI</span>
         </div>
 
         <Link
           href="/chat"
-          className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-lg font-medium transition-all shadow-sm"
+          className="flex items-center justify-center gap-2 w-full bg-orange-600 hover:bg-orange-700 text-white py-2.5 px-4 rounded-lg font-medium transition-all shadow-sm"
         >
           <Plus className="w-5 h-5" />
           <span>New Chat</span>
