@@ -75,7 +75,10 @@ export default function ChatContainer({ sessionId }) {
       saveToStorage(sessionId, finalHistory);
     } catch (err) {
       console.error("Chat API error:", err);
-      setError(err.message || "Sorry, something went wrong. Please try again.");
+      setError(
+        err.message ||
+          "Sorry, something went wrong. Please try again or create new chat."
+      );
     } finally {
       setIsLoading(false);
     }
